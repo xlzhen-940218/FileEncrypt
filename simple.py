@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import zlib
@@ -5,13 +6,11 @@ import zlib
 ENCRYPT_KEY = 0xA8
 
 
-def encrypt_or_decrypt(enc):
-    # 获取需要处理的文件名
-    filename = sys.argv[2]
+def encrypt_or_decrypt(enc, file_name, processed_filename):
     current_time = time.time()
-    print('open file binary {0}'.format(sys.argv[2]))
+    print('open file binary {0}'.format(file_name))
     # 打开文件，得到文件流
-    data = open(filename, "rb").read()
+    data = open(file_name, "rb").read()
     print('open file time = {0} second'.format(time.time() - current_time))
     current_time = time.time()
     # 如果不是加密文件，那就是解密。解密前需要先把文件gzip解压处理
@@ -32,13 +31,25 @@ def encrypt_or_decrypt(enc):
         print('compress time = {0} second'.format(time.time() - current_time))
         current_time = time.time()
     # 随后将处理好的bytes流写入到文件中
-    open(sys.argv[3], "wb").write(data)
-    print('save file = {0} time = {1} second'.format(sys.argv[3], time.time() - current_time))
+    open(processed_filename, "wb").write(data)
+    print('save file = {0} time = {1} second'.format(processed_filename, time.time() - current_time))
 
 
 if __name__ == '__main__':
     # sys.argv 命令行参数列表
-    if sys.argv[1] == 'encrypt':
-        encrypt_or_decrypt(True)
-    elif sys.argv[1] == 'decrypt':
-        encrypt_or_decrypt(False)
+    is_encrypt = sys.argv[1] == 'encrypt'
+    if sys.argv[2] == 'file':
+        encrypt_or_decrypt(is_encrypt, sys.argv[3], sys.argv[4])
+    elif sys.argv[2] == 'folder':
+        folder = sys.argv[3]
+        file_names = os.listdir(folder)
+        for index in range(len(file_names)):
+            filename = os.path.join(os.path.abspath(folder), file_names[index])
+            if os.path.isfile(filename):
+                if filename.endswith('.enc') and is_encrypt:
+                    continue
+                if not filename.endswith('.enc') and not is_encrypt:
+                    continue
+                new_file_name = filename + '.enc' if is_encrypt else filename.replace('.enc', '')
+                encrypt_or_decrypt(is_encrypt, filename, new_file_name)
+                os.remove(filename)
