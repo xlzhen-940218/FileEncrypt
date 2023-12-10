@@ -39,9 +39,25 @@ if __name__ == '__main__':
     # sys.argv 命令行参数列表
     is_encrypt = sys.argv[1] == 'encrypt'
     if sys.argv[2] == 'file':
+        if len(sys.argv) > 5:
+            try:
+                key = int(sys.argv[5])
+                if key >= 256 or key < 0:
+                    raise ValueError('key must be less than 256 and greater than or equal to 0')
+                ENCRYPT_KEY = key
+            except ValueError as e:
+                print('Encrypt key Incorrect format,message : {0}, use normal key {1}'.format(e, ENCRYPT_KEY))
         encrypt_or_decrypt(is_encrypt, sys.argv[3], sys.argv[4])
     elif sys.argv[2] == 'folder':
         folder = sys.argv[3]
+        if len(sys.argv) > 4:
+            try:
+                key = int(sys.argv[4])
+                if key >= 256 or key < 0:
+                    raise ValueError('key must be less than 256 and greater than or equal to 0')
+                ENCRYPT_KEY = key
+            except ValueError as e:
+                print('Encrypt key Incorrect format,message : {0}, use normal key {1}'.format(e, ENCRYPT_KEY))
         file_names = os.listdir(folder)
         for index in range(len(file_names)):
             filename = os.path.join(os.path.abspath(folder), file_names[index])
