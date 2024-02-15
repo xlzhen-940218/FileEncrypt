@@ -3,6 +3,8 @@ import sys
 import time
 import zlib
 
+import multiprocessing as mp
+
 ENCRYPT_KEY = 0xA8
 
 
@@ -35,6 +37,18 @@ def encrypt_or_decrypt(enc, file_name, processed_filename):
     print('save file = {0} time = {1} second'.format(processed_filename, time.time() - current_time))
 
 
+def folder_enc_dec(is_enc: bool, folder_path: str, name: str):
+    filename = os.path.join(os.path.abspath(folder_path), name)
+    if os.path.isfile(filename):
+        if filename.endswith('.enc') and is_enc:
+            return
+        if not filename.endswith('.enc') and not is_enc:
+            return
+        new_file_name = filename + '.enc' if is_enc else filename.replace('.enc', '')
+        encrypt_or_decrypt(is_enc, filename, new_file_name)
+        os.remove(filename)
+
+
 if __name__ == '__main__':
     # sys.argv 命令行参数列表
     is_encrypt = sys.argv[1] == 'encrypt'
@@ -60,12 +74,5 @@ if __name__ == '__main__':
                 print('Encrypt key Incorrect format,message : {0}, use normal key {1}'.format(e, ENCRYPT_KEY))
         file_names = os.listdir(folder)
         for index in range(len(file_names)):
-            filename = os.path.join(os.path.abspath(folder), file_names[index])
-            if os.path.isfile(filename):
-                if filename.endswith('.enc') and is_encrypt:
-                    continue
-                if not filename.endswith('.enc') and not is_encrypt:
-                    continue
-                new_file_name = filename + '.enc' if is_encrypt else filename.replace('.enc', '')
-                encrypt_or_decrypt(is_encrypt, filename, new_file_name)
-                os.remove(filename)
+            process = mp.Process(target=folder_enc_dec, args=(is_encrypt, folder, file_names[index]))
+            process.start()
